@@ -24,48 +24,7 @@ const PORT = process.env.PORT || 4000;
 let userList = {};
 let userChoiceList = {};
 let statData = {};
-let timerValue = 5 * 30;
-const countDown = () => {
-  timerValue--;
-  io.emit("timer", timerValue);
-  console.log(timerValue);
-};
 
-const sendQuestion = (setQuestions) => {
-  // setInterval(countDown, 1000);
-  // io.emit("fetchQuestions", setQuestions);
-  for (let i = 0; i < setQuestions.length; i++) {
-    setInterval(function () {
-      io.emit("question", setQuestions[i]);
-    }, 30000);
-    // setInterval(countDown, 1000);
-
-    if (timerValue == 0) {
-      timerValue = 30;
-    }
-  }
-};
-
-const setLevelQuestions = (data) => {
-  const sessionQuestionCount = 20;
-  var questionCount = 0;
-
-  const questions = [];
-
-  while (questionCount < sessionQuestionCount) {
-    let randomIndex = Math.floor(Math.random() * data.length);
-    let randomElement = data[randomIndex];
-
-    if (!questions.includes(randomElement)) {
-      questions.push(randomElement);
-      questionCount++;
-    } else {
-      continue;
-    }
-  }
-
-  return questions;
-};
 app.use(
   cors({
     origin: "http://localhost:5173", // your React app's URL
@@ -89,6 +48,7 @@ app.get("/fetch-questions", async (req, res) => {
 
     // Emit data to all connected clients
     io.emit("question", data[randomIndex]);
+    io.emit("timer");
 
     res.status(200).send(data);
   } catch (error) {
