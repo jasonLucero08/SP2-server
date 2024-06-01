@@ -14,7 +14,7 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "https://456-mu.vercel.app/", // your React app's URL
+    origin: "https://456-mu.vercel.app", // your React app's URL
     methods: ["GET", "POST"],
   },
 });
@@ -27,7 +27,7 @@ let statData = {};
 
 app.use(
   cors({
-    origin: "https://456-mu.vercel.app/", // your React app's URL
+    origin: "https://456-mu.vercel.app", // your React app's URL
   })
 );
 
