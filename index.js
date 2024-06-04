@@ -30,8 +30,8 @@ let userRooms = {};
 
 app.use(
   cors({
-    origin: "https://456-server.glitch.me/", // your React app's URL
-    // origin: "http://localhost:5173", // your React app's URL
+    // origin: "https://456-server.glitch.me/", // your React app's URL
+    origin: "http://localhost:5173", // your React app's URL
   })
 );
 
@@ -78,14 +78,19 @@ io.on("connection", (socket) => {
   socket.on("joinRoom", (roomCode, callback) => {
     const room = io.sockets.adapter.rooms.get(roomCode);
     if (room) {
-      socket.join(roomCode);
-      userRooms[socket.id] = roomCode;
-      console.log(`User ${socket.id} joined room ${roomCode}`);
-      callback({ success: true });
+      if (room.size < 2) {
+        // Check if the room has less than 2 users
+        socket.join(roomCode);
+        userRooms[socket.id] = roomCode;
+        console.log(`User ${socket.id} joined room ${roomCode}`);
+        callback({ success: true });
 
-      // Notify both users when the room has two participants
-      if (room.size === 2) {
-        io.in(roomCode).emit("roomReady", roomCode);
+        // Notify both users when the room has two participants
+        if (room.size === 2) {
+          io.in(roomCode).emit("roomReady", roomCode);
+        }
+      } else {
+        callback({ success: false, message: "Room is full" });
       }
     } else {
       callback({ success: false, message: "Room not found" });
