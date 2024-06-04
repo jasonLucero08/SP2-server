@@ -30,8 +30,8 @@ let userRooms = {};
 
 app.use(
   cors({
-    // origin: "https://456-server.glitch.me/", // your React app's URL
-    origin: "http://localhost:5173", // your React app's URL
+    origin: "https://456-server.glitch.me/", // your React app's URL
+    // origin: "http://localhost:5173", // your React app's URL
   })
 );
 
