@@ -14,7 +14,8 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "https://456-game.vercel.app", // your React app's URL
+    origin: "https://456-server.glitch.me/", // your React app's URL
+    // origin: "http://localhost:5173", // your React app's URL
     methods: ["GET", "POST"],
   },
 });
@@ -24,10 +25,13 @@ const PORT = process.env.PORT || 3000;
 let userList = {};
 let userChoiceList = {};
 let statData = {};
+let hasPicked = {};
+let userRooms = {};
 
 app.use(
   cors({
-    origin: "https://456-game.vercel.app", // your React app's URL
+    origin: "https://456-server.glitch.me/", // your React app's URL
+    // origin: "http://localhost:5173", // your React app's URL
   })
 );
 
@@ -66,6 +70,7 @@ io.on("connection", (socket) => {
   socket.on("createRoom", (callback) => {
     const roomCode = Math.random().toString(36).substring(2, 7);
     socket.join(roomCode);
+    userRooms[socket.id] = roomCode;
     console.log(`Room created with code: ${roomCode}`);
     callback(roomCode);
   });
@@ -74,6 +79,7 @@ io.on("connection", (socket) => {
     const room = io.sockets.adapter.rooms.get(roomCode);
     if (room) {
       socket.join(roomCode);
+      userRooms[socket.id] = roomCode;
       console.log(`User ${socket.id} joined room ${roomCode}`);
       callback({ success: true });
 
@@ -106,6 +112,10 @@ io.on("connection", (socket) => {
     statData = {};
   });
 
+  socket.on("clearHasPicked", () => {
+    hasPicked = {};
+  });
+
   socket.on("enemyStatChange", (data) => {
     const room = io.sockets.adapter.rooms.get(data.roomCode);
     if (room) {
@@ -123,6 +133,10 @@ io.on("connection", (socket) => {
       userChoiceList[userName] = {
         choice: data.val,
       };
+      hasPicked[userName] = {
+        message: data.playerPicked,
+      };
+      io.in(data.roomCode).emit("showHasPicked", hasPicked);
 
       if (Object.keys(userChoiceList).length == 2) {
         io.in(data.roomCode).emit("showCorrectChoices", userChoiceList);
@@ -136,6 +150,21 @@ io.on("connection", (socket) => {
 
   socket.on("disconnect", () => {
     console.log("A user disconnected:", socket.id);
+    console.log(socket.rooms);
+    const roomCode = userRooms[socket.id];
+    if (roomCode) {
+      delete userRooms[socket.id];
+      const room = io.sockets.adapter.rooms.get(roomCode);
+      if (room && room.size === 1) {
+        const remainingUserId = Array.from(room)[0];
+        io.to(remainingUserId).emit("winner", "The other user left.");
+        console.log(
+          `User ${remainingUserId} is the winner by default in room ${roomCode}`
+        );
+      } else if (!room) {
+        console.log(`Room ${roomCode} is now empty`);
+      }
+    }
   });
 });
 
